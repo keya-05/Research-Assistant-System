@@ -124,10 +124,23 @@ def calibrate_urgency(text: str, predicted_urgency: str) -> str:
     return predicted_urgency
 
 
-async def classify_ticket(text: str) -> dict:
+async def classify_ticket(text: str, db: Session = None) -> dict:
     if not OPENROUTER_API_KEY:
         logger.warning("OPENROUTER_API_KEY not configured, using fallback classification")
         return FALLBACK_CLASSIFICATION.copy()
+
+    # Step 1: Build dynamic learning context (RLHF)
+    dynamic_context = ""
+    if db:
+        try:
+            context = get_agent_context(db)
+            dynamic_context = build_dynamic_prompt_section(context)
+        except Exception as e:
+            logger.warning("Failed to build learning context: %s", e)
+
+    system_content = "You are a support triage assistant. Respond with JSON only."
+    if dynamic_context:
+        system_content += f"\n\n--- AGENT MEMORY & LEARNING CONTEXT ---\n{dynamic_context}"
 
     prompt = (
         "You classify support tickets.\n"
@@ -157,7 +170,7 @@ async def classify_ticket(text: str) -> dict:
                     "messages": [
                         {
                             "role": "system",
-                            "content": "You are a support triage assistant. Respond with JSON only.",
+                            "content": system_content,
                         },
                         {"role": "user", "content": prompt},
                     ],
