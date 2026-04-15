@@ -1,89 +1,173 @@
-# Agent Monitor API
+# Ticketing API
 
-This project is a small AI monitoring backend built with FastAPI, PostgreSQL, token-based authentication, and an LLM-backed summary endpoint.
+This project is a small support ticketing backend built with FastAPI, PostgreSQL, bearer-token authentication, and OpenRouter-based ticket classification.
 
-## What the system does
+This system uses Human-in-the-Loop validation to ensure AI outputs are reviewed before final action.
 
-- Stores monitored agents in PostgreSQL.
-- Protects API routes with a bearer token.
-- Supports CRUD operations for agents.
-- Generates one-line health summaries for agents by calling the OpenRouter chat completions API.
-- Applies rate limiting on the summary endpoint.
+## What it does
 
-## Current architecture
+- Accepts a support ticket with `text` and `email`
+- Uses an LLM to classify the ticket into:
+  - `Billing`, `Technical`, or `General`
+  - `High`, `Medium`, or `Low`
+- Generates a short AI draft reply
+- Adds a human-in-the-loop review step before approval or closure
+- Tracks SLA deadlines for the human review stage
+- Automatically logs escalations for high-priority tickets
+- Falls back safely when the LLM response is missing or invalid
+- Stores tickets in PostgreSQL
+- Returns all tickets with category, urgency, status, sorting, and search options
+- Protects endpoints with a bearer token
+- Includes a lightweight browser frontend for ticket submission and review
 
-- `app/main.py`: FastAPI app setup, router registration, rate-limit handler.
-- `app/database.py`: SQLAlchemy engine, session factory, base model.
-- `app/models.py`: `Agent` table definition.
-- `app/auth.py`: bearer-token verification.
-- `app/routers/agents.py`: create, read, update, delete agent endpoints.
-- `app/routers/summary.py`: LLM-powered summary endpoint with in-memory caching.
+## Project structure
 
-## API flow
+- `app/main.py`: FastAPI app setup and router registration
+- `app/database.py`: SQLAlchemy engine, session factory, base model
+- `app/models.py`: `Ticket` and `EscalationLog` database models
+- `app/services/tickets.py`: ticket classification, escalation, search, sorting, stats, and serialization logic
+- `app/auth.py`: bearer-token verification
+- `app/routers/tickets.py`: ticket create and list endpoints
+- `app/static/`: browser frontend files
 
-1. Client sends a request with `Authorization: Bearer <API_TOKEN>`.
-2. FastAPI validates the token in `app/auth.py`.
-3. CRUD routes read or write agent rows in PostgreSQL.
-4. `/agents-summary/` loads all agents from the database.
-5. Each agent status is sent to OpenRouter to generate a short health summary.
-6. Summaries are cached in memory by status to avoid repeated external calls.
+## Human-in-the-Loop workflow
+
+- New tickets are created with status `needs_review`
+- A human reviewer can approve the AI output, correct category or urgency, edit the draft reply, or close the ticket
+- High-urgency tickets are highlighted in the UI for manual attention
+- High-urgency tickets automatically create an escalation log
+- SLA is measured against the review stage:
+  - `High`: 1 hour
+  - `Medium`: 4 hours
+  - `Low`: 24 hours
+- Tickets still waiting on human review after the deadline are marked as breached
+
+## Architecture
+
+- `routes`: request and response handling
+- `services`: ticket workflow, LLM handling, escalation rules, search, sorting, and stats
+- `models`: database tables
 
 ## Endpoints
 
 ### Health
 
-- `GET /`
+- `GET /health`
 
 Example response:
 
 ```json
 {
-  "message": "Agent Monitor API running"
+  "message": "Ticketing API running"
 }
 ```
 
-### Create agent
+### Frontend
 
-- `POST /agents/`
+- `GET /`
+
+This opens the browser dashboard for:
+
+- saving the bearer token locally
+- creating tickets
+- seeing dashboard stats
+- filtering stored tickets by category, urgency, status, and SLA state
+- sorting by newest, oldest, or urgency
+- searching ticket text, email, or draft reply
+- loading tickets that need review
+- approving or editing AI output
+- seeing SLA due times and breach badges
+
+### Create ticket
+
+- `POST /tickets/`
 
 Request body:
 
 ```json
 {
-  "name": "Planner-01",
-  "agent_type": "planner",
-  "status": "healthy"
+  "text": "I am having trouble with the response time of a chatbot",
+  "email": "xyz@gmail.com"
 }
 ```
 
-### List agents
+Example response:
 
-- `GET /agents/`
-- Optional query params: `status`, `limit`, `offset`
-
-Example:
-
-```text
-GET /agents/?status=healthy&limit=5&offset=0
+```json
+{
+  "id": 1,
+  "text": "I am having trouble with the response time of a chatbot",
+  "email": "xyz@gmail.com",
+  "category": "Technical",
+  "urgency": "Medium",
+  "status": "needs_review",
+  "draft_reply": "Thank you for reaching out. Our team will look into the chatbot response delay and get back to you shortly.",
+  "created_at": "2026-04-15T06:14:06.585018",
+  "sla_due_at": "2026-04-15T10:14:06.585018",
+  "sla_breached": false
+}
 ```
 
-### Get one agent
+### List tickets
 
-- `GET /agents/{agent_id}`
+- `GET /tickets/`
+- Optional query params: `category`, `urgency`, `status`, `sla_breached`, `sort_by`
 
-### Update status
+Examples:
 
-- `PUT /agents/{agent_id}?status=degraded`
+```text
+GET /tickets/
+GET /tickets/?category=Billing
+GET /tickets/?category=Technical
+GET /tickets/?urgency=High
+GET /tickets/?status=needs_review
+GET /tickets/?sla_breached=true
+GET /tickets/?sort_by=urgency
+```
 
-### Delete agent
+### Review queue
 
-- `DELETE /agents/{agent_id}`
+- `GET /tickets/review`
 
-### Generate summaries
+Returns tickets waiting for human review.
 
-- `GET /agents-summary/`
+Optional query param:
 
-This endpoint is rate-limited to `10/minute`.
+- `sla_breached`
+
+### Search tickets
+
+- `GET /tickets/search?q=<term>`
+
+Searches ticket text, email, and draft reply.
+
+### Ticket stats
+
+- `GET /tickets/stats`
+
+Returns:
+
+- total tickets
+- high priority count
+- pending review count
+- breached review SLA count
+- billing ticket count
+- escalated ticket count
+
+### Review ticket
+
+- `PATCH /tickets/{ticket_id}/review`
+
+Example body:
+
+```json
+{
+  "category": "Technical",
+  "urgency": "Medium",
+  "draft_reply": "Thanks for reporting this. We have reviewed the issue and are investigating.",
+  "status": "approved"
+}
+```
 
 ## Running the API
 
@@ -96,8 +180,12 @@ pip install -r requirements.txt
 Start the server:
 
 ```powershell
-uvicorn app.main:app --reload
+.\venv\Scripts\python.exe -m uvicorn app.main:app --reload
 ```
+
+Open the frontend:
+
+- [Ticketing UI](http://127.0.0.1:8000/)
 
 Open docs:
 
@@ -110,82 +198,47 @@ Create a `.env` file with:
 ```env
 API_TOKEN=your-secret-token
 OPENROUTER_API_KEY=your-openrouter-api-key
+OPENROUTER_MODEL=openai/gpt-4o-mini
+DATABASE_URL=postgresql://username:password@host:port/database?sslmode=require
 ```
-
-## Demonstrating the API
-
-Use Swagger UI for the demo:
-
-- [Swagger UI](http://127.0.0.1:8000/docs)
-
-Recommended demo flow:
-
-1. Authorize with your bearer token.
-2. Create an agent with `POST /agents/`.
-3. View agents with `GET /agents/`.
-4. Update agent status with `PUT /agents/{agent_id}`.
-5. Generate AI summaries with `GET /agents-summary/`.
-6. Delete the demo agent with `DELETE /agents/{agent_id}`.
 
 ## Example cURL calls
 
-Set your token first:
+Create ticket:
 
 ```powershell
-$env:API_TOKEN = "your-secret-token"
-```
-
-Create:
-
-```powershell
-curl -X POST "http://127.0.0.1:8000/agents/" `
-  -H "Authorization: Bearer $env:API_TOKEN" `
+curl -X POST "http://127.0.0.1:8000/tickets/" `
+  -H "Authorization: Bearer mysecrettoken" `
   -H "Content-Type: application/json" `
-  -d "{\"name\":\"Planner-01\",\"agent_type\":\"planner\",\"status\":\"healthy\"}"
+  -d "{\"text\":\"I am having trouble with the response time of a chatbot\",\"email\":\"xyz@gmail.com\"}"
 ```
 
-List:
+List all tickets:
 
 ```powershell
-curl -X GET "http://127.0.0.1:8000/agents/" `
-  -H "Authorization: Bearer $env:API_TOKEN"
+curl -X GET "http://127.0.0.1:8000/tickets/" `
+  -H "Authorization: Bearer mysecrettoken"
 ```
 
-Update:
+Filter by category:
 
 ```powershell
-curl -X PUT "http://127.0.0.1:8000/agents/1?status=degraded" `
-  -H "Authorization: Bearer $env:API_TOKEN"
+curl -X GET "http://127.0.0.1:8000/tickets/?category=Technical" `
+  -H "Authorization: Bearer mysecrettoken"
 ```
 
-Summaries:
+Get tickets needing review:
 
 ```powershell
-curl -X GET "http://127.0.0.1:8000/agents-summary/" `
-  -H "Authorization: Bearer $env:API_TOKEN"
+curl -X GET "http://127.0.0.1:8000/tickets/review" `
+  -H "Authorization: Bearer mysecrettoken"
 ```
 
-## Analysis: what is working well
+Approve after review:
 
-- The structure is clean and easy to follow.
-- Agent CRUD is separated from summary generation.
-- Logging is present on important operations.
-- Authentication is simple enough for local demos.
-- Summary generation is asynchronous and uses `asyncio.gather`, which is a good fit for concurrent LLM calls.
-
-## Analysis: main risks and improvement areas
-
-- The database URL is hardcoded in code instead of being read from environment variables.
-- Returning ORM objects directly can make API contracts less explicit than response models.
-- The summary cache is process-local and disappears on restart.
-- The OpenRouter response is not checked with `raise_for_status()`, so upstream failures may surface unclearly.
-- The selected model string in `app/routers/summary.py` may not be the best long-term choice if provider availability changes.
-- The root endpoint currently contains a non-ASCII rocket character that can display oddly on some Windows terminals.
-
-## Recommended next upgrades
-
-1. Move `DATABASE_URL` to `.env`.
-2. Add Pydantic response models for agents and summaries.
-3. Add `response.raise_for_status()` and better error messages in the LLM call.
-4. Add tests for auth, CRUD, and summary failures.
-5. Consider Redis or database-backed caching if this grows beyond a local demo.
+```powershell
+curl -X PATCH "http://127.0.0.1:8000/tickets/1/review" `
+  -H "Authorization: Bearer mysecrettoken" `
+  -H "Content-Type: application/json" `
+  -d "{\"status\":\"approved\"}"
+```
