@@ -121,6 +121,19 @@ def _serialize_ticket(ticket: Ticket) -> TicketResponse:
 async def create_ticket(request: Request, ticket_data: TicketCreate, dep=Depends(verify_token)):
     db = SessionLocal()
     try:
+        # Check for duplicate: same email and same text
+        existing_ticket = db.query(Ticket).filter(
+            Ticket.email == ticket_data.email,
+            Ticket.text == ticket_data.text
+        ).first()
+
+        if existing_ticket:
+            logger.info("Duplicate ticket attempt blocked for %s", ticket_data.email)
+            raise HTTPException(
+                status_code=400,
+                detail="Duplicate ticket: This exact same query has already been submitted by your email."
+            )
+
         classification = await classify_ticket(ticket_data.text)
         new_ticket = Ticket(
             text=ticket_data.text,
