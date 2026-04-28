@@ -27,3 +27,75 @@ backend/__pycache__/
 backend/venv/
 backend/.env
 backend/.gitignore
+
+
+# Environment variables
+Agents/.env
+
+# Python
+Agents/__pycache__/
+Agents/*.py[cod]
+Agents/*.pyo
+Agents/*.pyd
+Agents/.Python
+Agents/*.egg-info/
+Agents/dist/
+Agents/build/
+Agents/eggs/
+Agents/*.egg
+Agents/.installed.cfg
+
+# Virtual environment
+Agents/venv/
+Agents/env/
+Agents/.venv/
+Agents/ENV/
+
+# LangGraph / LangSmith
+Agents/.langgraph_cache/
+Agents/langgraph.db
+
+# IDE
+Agents/.vscode/
+Agents/.idea/
+Agents/*.swp
+Agents/*.swo
+Agents/.DS_Store
+
+# Logs
+Agents/*.log
+Agents/logs/
+
+# Testing
+Agents/.pytest_cache/
+Agents/.coverage
+Agents/htmlcov/
+
+# Docker
+Agents/*.env.local
+
+Agents/.env
+Agents/__pycache__/
+Agents/*.pyc
+Agents/.langgraph_api/
+Agents/venv/
+Agents/.venv/
+
+# Python environment
+venv/
+Agents/venv/
+__pycache__/
+Agents/**/__pycache__/
+*.pyc
+
+# Sensitive Data
+.env
+Agents/.env
+
+# LangGraph & Local Checkpoints
+.langgraph_api/
+Agents/.langgraph_api/
+*.pckl
+
+# OS files
+.DS_Store

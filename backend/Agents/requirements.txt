@@ -1,11 +1,3 @@
-fastapi
-uvicorn
-asyncpg
-httpx
-pydantic
-python-dotenv
-
-#Agents
 langchain==0.2.16
 langgraph
 #langchain-openai

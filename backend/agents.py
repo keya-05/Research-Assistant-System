@@ -1,6 +1,12 @@
 import os, json, re, logging, httpx
 from dotenv import load_dotenv
 load_dotenv()
+import os, logging
+from dotenv import load_dotenv
+# Import your compiled LangGraph from your Agents folder
+from Agents.graph.workflow import app as research_graph
+
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 API_URL = "https://api.groq.com/openai/v1/chat/completions"
@@ -12,28 +18,41 @@ HEADERS = {
     "Content-Type": "application/json",
 }
 
-async def call_groq(system: str, user: str, max_tokens=1024) -> str:
-    if not API_KEY:
-        raise ValueError("GROQ_API_KEY is missing from .env")
 
-    payload = {
-        "model": MODEL,
-        "max_tokens": max_tokens,
-        "messages": [
-            {"role": "system", "content": system},
-            {"role": "user",   "content": user},
-        ],
+
+async def run_research_pipeline(question: str) -> dict:
+    """
+    Connects the FastAPI backend to the LangGraph Multi-Agent system.
+    """
+    logger.info(f"Starting LangGraph pipeline for: {question}")
+    
+    # Initialize the State for your graph
+    # Ensure these keys match what you defined in your State class in graph/state.py
+    initial_state = {
+        "messages": [("user", question)],
+        "question": question,
+        "answer": "",
+        "sources": [],
+        "confidence": "low"
     }
-    logger.info(f"Calling Groq model: {MODEL}")
-    async with httpx.AsyncClient(timeout=60) as client:
-        resp = await client.post(API_URL, headers=HEADERS, json=payload)
-        logger.info(f"Groq status: {resp.status_code}")
-        resp.raise_for_status()
-        data = resp.json()
 
-    content = data["choices"][0]["message"]["content"].strip()
-    logger.info(f"Groq raw response: {content[:300]}")
-    return content
+    try:
+        # Run the graph
+        # ainvoke is used for async execution
+        result = await research_graph.ainvoke(initial_state)
+        
+        logger.info("LangGraph pipeline completed successfully.")
+        
+        # Extract data from the final state
+        return {
+            "answer": result.get("answer", "No answer generated."),
+            "sources": result.get("sources", [])[:8],
+            "confidence": result.get("confidence", "medium"),
+        }
+
+    except Exception as e:
+        logger.error(f"LangGraph execution failed: {e}", exc_info=True)
+        raise
 
 
 def extract_json(text: str) -> dict:
