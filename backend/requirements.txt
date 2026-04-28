@@ -1,3 +1,4 @@
+# Web & Database
 fastapi
 uvicorn
 asyncpg
@@ -5,18 +6,16 @@ httpx
 pydantic
 python-dotenv
 
-#Agents
-langchain==0.2.16
+# Agent Core
+langchain
 langgraph
-#langchain-openai
 langchain-community
-tavily-python==0.3.3
-python-dotenv==1.0.1
-langchain-google-genai
-
-# for testing:
-langgraph-cli #
-langgraph-api
 langchain-core
-#pip install -U "langgraph-cli[inmem]"
 
+# AI Models & Tools
+langchain-google-genai
+tavily-python
+
+# Development & CLI
+langgraph-cli[inmem]
+langgraph-api

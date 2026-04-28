@@ -1,8 +1,8 @@
 from langgraph.graph import StateGraph, END
-from graph.state import AgentState  # Stick to one state class
-from agents.research_agent import research_agent
-from agents.summarization_agent import summarization_agent
-from agents.verification_agent import verification_agent
+from Agents.graph.state import AgentState
+from Agents.agents.research_agent import research_agent
+from Agents.agents.summarization_agent import summarization_agent
+from Agents.agents.verification_agent import verification_agent
 
 def build_workflow():
     # 1. Initialize with your defined AgentState
