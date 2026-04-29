@@ -5,6 +5,8 @@ langchain-community
 tavily-python==0.3.3
 python-dotenv==1.0.1
 langchain-google-genai
+langchain-groq
+langchain-tavily
 
 # for testing:
 langgraph-cli #

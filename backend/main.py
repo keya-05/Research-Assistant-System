@@ -1,14 +1,22 @@
 import logging
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator
+import contextlib
 from database import init_db, get_cached_query, save_query_response
 from agents import process_query
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Research Assistant API")
+@contextlib.asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup logic
+    await init_db()
+    yield
+    # Shutdown logic (if any)
+
+app = FastAPI(title="Research Assistant API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -18,8 +26,9 @@ app.add_middleware(
 class QueryRequest(BaseModel):
     question: str
 
-    @validator("question")
-    def validate(cls, v):
+    @field_validator("question")
+    @classmethod
+    def validate_question(cls, v: str) -> str:
         v = v.strip()
         if len(v) < 5:    raise ValueError("Too short (min 5 chars)")
         if len(v) > 2000: raise ValueError("Too long (max 2000 chars)")
@@ -31,9 +40,6 @@ class QueryResponse(BaseModel):
     confidence: str
     cached: bool = False
 
-@app.on_event("startup")
-async def startup():
-    await init_db()
 
 @app.get("/health")
 async def health():
@@ -70,3 +76,7 @@ async def query(req: QueryRequest):
         # Don't crash the request if DB save fails — still return result
 
     return QueryResponse(**result)
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
