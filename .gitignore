@@ -27,7 +27,12 @@ backend/__pycache__/
 backend/venv/
 backend/.env
 backend/.gitignore
-
+.env
+*.env
+backend/.env
+frontend/.env
+.env.local
+.env.*.local
 
 # Environment variables
 Agents/.env
