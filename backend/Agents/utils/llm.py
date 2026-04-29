@@ -6,6 +6,6 @@ load_dotenv()
 
 def get_llm(temperature: float = 0.2) -> ChatGoogleGenerativeAI:
     return ChatGoogleGenerativeAI(
-        model="gemini-3-flash-preview", 
+        model="gemini-3-flash-preview",
         temperature=temperature
     )

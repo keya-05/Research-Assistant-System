@@ -1,6 +1,6 @@
 # Web & Database
 fastapi
-uvicorn
+uvicorn[standard]
 asyncpg
 httpx
 pydantic
@@ -18,4 +18,3 @@ tavily-python
 
 # Development & CLI
 langgraph-cli[inmem]
-langgraph-api

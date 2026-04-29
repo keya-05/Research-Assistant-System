@@ -23,5 +23,8 @@ def build_workflow():
 
     return workflow.compile()
 
-# This 'app' is what your FastAPI (agent.py) will import
+# 'app' — used by backend/agents.py (from Agents.graph.workflow import app)
 app = build_workflow()
+
+# 'workflow' — used by Agents/main.py and langgraph.json
+workflow = app

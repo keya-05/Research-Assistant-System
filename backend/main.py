@@ -3,7 +3,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, validator
 from database import init_db, get_cached_query, save_query_response
-from agents import run_research_pipeline
+from agents import process_query
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
@@ -52,18 +52,21 @@ async def query(req: QueryRequest):
 
     # Run pipeline
     try:
-        result = await run_research_pipeline(q)
+        result = await process_query(q)
         logger.info(f"Pipeline result: confidence={result['confidence']}, sources={len(result['sources'])}")
     except Exception as e:
         logger.error(f"Pipeline failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Research pipeline failed: {str(e)}")
 
-    # Save to DB
-    try:
-        await save_query_response(q, result["answer"], result["sources"], result["confidence"])
-        logger.info("Saved to database")
-    except Exception as e:
-        logger.error(f"DB save failed: {e}", exc_info=True)
+    # Save to DB only if it's a real result (not a fallback error)
+    if result["confidence"] != "low" or "error occurred" not in result["answer"].lower():
+        try:
+            await save_query_response(q, result["answer"], result["sources"], result["confidence"])
+            logger.info("Saved to database")
+        except Exception as e:
+            logger.error(f"DB save failed: {e}", exc_info=True)
+    else:
+        logger.info("Result was a fallback error; skipping database save.")
         # Don't crash the request if DB save fails — still return result
 
     return QueryResponse(**result)
