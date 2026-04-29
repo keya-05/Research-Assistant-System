@@ -1,0 +1,20 @@
+# Web & Database
+fastapi
+uvicorn[standard]
+asyncpg
+httpx
+pydantic
+python-dotenv
+
+# Agent Core
+langchain
+langgraph
+langchain-community
+langchain-core
+
+# AI Models & Tools
+langchain-google-genai
+tavily-python
+
+# Development & CLI
+langgraph-cli[inmem]

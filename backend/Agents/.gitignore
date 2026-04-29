@@ -1,0 +1,51 @@
+# Environment variables
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+eggs/
+*.egg
+.installed.cfg
+
+# Virtual environment
+venv/
+env/
+.venv/
+ENV/
+
+# LangGraph / LangSmith
+.langgraph_cache/
+langgraph.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Docker
+*.env.local
+
+.env
+__pycache__/
+*.pyc
+.langgraph_api/
+venv/
+.venv/

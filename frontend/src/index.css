@@ -1,0 +1,24 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0d0d0f;
+  --surface: #141417;
+  --surface2: #1c1c21;
+  --border: #2a2a31;
+  --text: #e8e6e1;
+  --muted: #6b6a72;
+  --accent: #f0a500;
+  --accent2: #e05c3a;
+  --high: #4ade80; --high-bg: rgba(74,222,128,0.1);
+  --med:  #fbbf24; --med-bg:  rgba(251,191,36,0.1);
+  --low:  #f87171; --low-bg:  rgba(248,113,113,0.1);
+  --r: 6px;
+}
+
+body {
+  font-family: 'Lora', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  min-height: 100vh;
+}

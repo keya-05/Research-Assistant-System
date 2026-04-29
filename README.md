@@ -1,4 +1,4 @@
-# Research Assistant
+# RAT:Research Assistant
 
 A full-stack web application designed to assist with research tasks. The application consists of a Python backend and a React frontend, providing a seamless interface for managing and analyzing research data.
 
