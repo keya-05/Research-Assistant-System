@@ -351,7 +351,7 @@ Expected proof:
 - `research_frontend` container running
 
 
-![Docker containers running]!(image.png)
+![Docker containers running](screenshots/docker-ps.png)
 
 ---
 
@@ -373,7 +373,7 @@ Expected proof:
 - `depends_on`
 
 
-![Docker Compose configuration](image-1.png)
+![Docker Compose configuration](screenshots/docker-compose.png)
 
 ---
 
@@ -392,7 +392,7 @@ Expected output:
 ```
 
 
-![Backend health endpoint](image-2.png)
+![Backend health endpoint](screenshots/backend-health.png)
 
 ---
 
@@ -409,7 +409,7 @@ Expected proof:
 - Frontend page loads successfully
 
 
-![Frontend application](image-3.png)
+![Frontend application](screenshots/frontend-ui.png)
 ---
 
 
@@ -445,11 +445,8 @@ Expected proof:
 - Response is stored
 - Timestamp exists
 
-Do not show passwords, connection strings, or API keys.
 
-Add screenshot here:
-
-![Neon database row](image-5.png)
+![Neon database row](screenshots/neon-database.png)
 
 ---
 
