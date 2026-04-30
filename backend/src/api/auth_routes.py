@@ -32,22 +32,14 @@ async def google_login(user_data: GoogleLogin) -> TokenResponse:
     user = await get_user_by_google_id(google_id)
     
     if not user:
-        # Check if user exists by email (might have registered with password)
-        user = await get_user_by_email(email)
-        
-        if user:
-            # Link Google account to existing user
-            # For simplicity, we create a new user - in production you'd link accounts
-            logger.info(f"User {email} exists but linking Google OAuth")
-        else:
-            # Create new Google user
-            user_id = await create_user(
-                email=email,
-                full_name=full_name,
-                google_id=google_id
-            )
-            user = await get_user_by_id(user_id)
-            logger.info(f"New Google user created: {email}")
+        # Create new Google user
+        user_id = await create_user(
+            email=email,
+            full_name=full_name,
+            google_id=google_id
+        )
+        user = await get_user_by_id(user_id)
+        logger.info(f"New Google user created: {email}")
     
     # Create access token
     access_token = create_access_token(data={"sub": str(user["id"]), "email": user["email"]})
