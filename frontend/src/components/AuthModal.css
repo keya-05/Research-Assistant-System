@@ -150,25 +150,18 @@
 
 /* Google Sign-In */
 .google-btn-container {
-  margin-bottom: 1rem;
+  margin: 1.5rem 0;
   min-height: 40px;
 }
 
-.auth-divider {
-  display: flex;
-  align-items: center;
-  margin: 1rem 0;
-  color: #666;
-  font-size: 0.875rem;
+.auth-subtitle {
+  color: #888;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
 }
 
-.auth-divider::before,
-.auth-divider::after {
-  content: '';
-  flex: 1;
-  border-bottom: 1px solid #333;
-}
-
-.auth-divider span {
-  padding: 0 1rem;
+.auth-loading {
+  color: #888;
+  font-size: 0.85rem;
+  margin-top: 1rem;
 }

@@ -8,7 +8,6 @@ python-dotenv
 
 # Authentication
 python-jose[cryptography]
-bcrypt
 python-multipart
 google-auth
 

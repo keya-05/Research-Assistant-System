@@ -1,6 +1,5 @@
-"""Authentication service for password hashing and JWT token management."""
+"""Authentication service for JWT token management (Google OAuth only)."""
 import os
-import bcrypt
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from jose import JWTError, jwt
@@ -12,28 +11,6 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
-
-def _truncate_password(password: str) -> bytes:
-    """Truncate password to 72 bytes for bcrypt compatibility."""
-    password_bytes = password.encode('utf-8')
-    if len(password_bytes) > 72:
-        password_bytes = password_bytes[:72]
-    return password_bytes
-
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a plain password against a hashed password."""
-    plain_bytes = _truncate_password(plain_password)
-    hashed_bytes = hashed_password.encode('utf-8')
-    return bcrypt.checkpw(plain_bytes, hashed_bytes)
-
-
-def get_password_hash(password: str) -> str:
-    """Hash a password using bcrypt."""
-    password_bytes = _truncate_password(password)
-    hashed = bcrypt.hashpw(password_bytes, bcrypt.gensalt())
-    return hashed.decode('utf-8')
 
 
 def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:

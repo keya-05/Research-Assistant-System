@@ -5,26 +5,6 @@ from pydantic import BaseModel, field_validator, EmailStr
 
 # ==================== AUTH MODELS ====================
 
-class UserCreate(BaseModel):
-    """Request model for user registration."""
-    email: EmailStr
-    password: str
-    full_name: Optional[str] = None
-
-    @field_validator("password")
-    @classmethod
-    def validate_password(cls, v: str) -> str:
-        if len(v) < 8:
-            raise ValueError("Password must be at least 8 characters")
-        return v
-
-
-class UserLogin(BaseModel):
-    """Request model for user login."""
-    email: EmailStr
-    password: str
-
-
 class GoogleLogin(BaseModel):
     """Request model for Google OAuth login."""
     token: str  # Google ID token from frontend

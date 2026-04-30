@@ -3,33 +3,10 @@ import { useAuth } from '../context/AuthContext'
 import './AuthModal.css'
 
 export default function AuthModal({ onClose }) {
-  const [isLogin, setIsLogin] = useState(true)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [fullName, setFullName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const { login, register, googleLogin } = useAuth()
+  const { googleLogin } = useAuth()
   const googleButtonRef = useRef(null)
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-
-    try {
-      if (isLogin) {
-        await login(email, password)
-      } else {
-        await register(email, password, fullName)
-      }
-      onClose()
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   // Handle Google Sign-In
   useEffect(() => {
@@ -51,15 +28,17 @@ export default function AuthModal({ onClose }) {
           theme: 'filled_black',
           size: 'large',
           width: '100%',
-          text: isLogin ? 'signin_with' : 'signup_with',
+          text: 'signin_with',
         })
       }
     }
 
     return () => {
-      document.body.removeChild(script)
+      if (document.body.contains(script)) {
+        document.body.removeChild(script)
+      }
     }
-  }, [isLogin])
+  }, [])
 
   const handleGoogleCallback = async (response) => {
     setError('')
@@ -80,64 +59,16 @@ export default function AuthModal({ onClose }) {
       <div className="auth-modal" onClick={e => e.stopPropagation()}>
         <button className="auth-modal-close" onClick={onClose}>✕</button>
         
-        <h2>{isLogin ? 'Login' : 'Create Account'}</h2>
+        <h2>Sign In</h2>
+        
+        <p className="auth-subtitle">Sign in with Google to continue</p>
         
         {error && <div className="auth-error">{error}</div>}
         
         {/* Google Sign-In Button */}
         <div ref={googleButtonRef} className="google-btn-container"></div>
         
-        <div className="auth-divider">
-          <span>or</span>
-        </div>
-        
-        <form onSubmit={handleSubmit}>
-          {!isLogin && (
-            <div className="auth-field">
-              <label>Full Name</label>
-              <input
-                type="text"
-                value={fullName}
-                onChange={e => setFullName(e.target.value)}
-                placeholder="John Doe"
-              />
-            </div>
-          )}
-          
-          <div className="auth-field">
-            <label>Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              required
-            />
-          </div>
-          
-          <div className="auth-field">
-            <label>Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              minLength={8}
-            />
-          </div>
-          
-          <button type="submit" className="auth-submit" disabled={loading}>
-            {loading ? 'Processing...' : (isLogin ? 'Login' : 'Create Account')}
-          </button>
-        </form>
-        
-        <p className="auth-switch">
-          {isLogin ? "Don't have an account? " : "Already have an account? "}
-          <button type="button" onClick={() => { setIsLogin(!isLogin); setError(''); }}>
-            {isLogin ? 'Sign up' : 'Login'}
-          </button>
-        </p>
+        {loading && <p className="auth-loading">Signing in...</p>}
       </div>
     </div>
   )

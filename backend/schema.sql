@@ -2,15 +2,12 @@
 -- Compatible with PostgreSQL and NeonDB
 -- Run this to initialize the database schema
 
--- Users table for authentication
--- Supports both email/password and Google OAuth
+-- Users table for Google OAuth authentication
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
-    hashed_password VARCHAR(255),  -- NULL for Google OAuth users
     full_name VARCHAR(255),
-    email_verified BOOLEAN DEFAULT FALSE,
-    google_id VARCHAR(255) UNIQUE,  -- Google OAuth user ID
+    google_id VARCHAR(255) UNIQUE NOT NULL,  -- Google OAuth user ID
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );

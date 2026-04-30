@@ -23,16 +23,13 @@ async def init_db():
     """Initialize database with new JSONB schema."""
     pool = await get_pool()
     async with pool.acquire() as conn:
-        # Create users table for authentication
-        # Supports both email/password and Google OAuth
+        # Create users table for Google OAuth authentication
         await conn.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
                 email VARCHAR(255) UNIQUE NOT NULL,
-                hashed_password VARCHAR(255),  -- NULL for Google OAuth users
                 full_name VARCHAR(255),
-                email_verified BOOLEAN DEFAULT FALSE,
-                google_id VARCHAR(255) UNIQUE,  -- Google OAuth user ID
+                google_id VARCHAR(255) UNIQUE NOT NULL,  -- Google OAuth user ID
                 created_at TIMESTAMPTZ DEFAULT NOW(),
                 updated_at TIMESTAMPTZ DEFAULT NOW()
             );
@@ -230,24 +227,17 @@ async def get_cached_query(question: str, conversation_id: Optional[int] = None)
 
 # ==================== USER OPERATIONS ====================
 
-async def create_user(email: str, hashed_password: Optional[str] = None, full_name: Optional[str] = None, google_id: Optional[str] = None) -> int:
-    """Create a new user and return their ID.
-    
-    For regular auth: provide hashed_password
-    For Google OAuth: provide google_id (password will be null)
-    """
+async def create_user(email: str, full_name: Optional[str] = None, google_id: str = None) -> int:
+    """Create a new user with Google OAuth and return their ID."""
     pool = await get_pool()
     async with pool.acquire() as conn:
-        # For Google users, mark email as verified automatically
-        email_verified = google_id is not None
-        
         result = await conn.fetchrow(
-            """INSERT INTO users (email, hashed_password, full_name, email_verified, google_id) 
-               VALUES ($1, $2, $3, $4, $5) RETURNING id""",
-            email, hashed_password, full_name, email_verified, google_id
+            """INSERT INTO users (email, full_name, google_id) 
+               VALUES ($1, $2, $3) RETURNING id""",
+            email, full_name, google_id
         )
         user_id = result["id"]
-        logger.info(f"Created user {user_id} with email {email} (google: {google_id is not None})")
+        logger.info(f"Created Google user {user_id} with email {email}")
         return user_id
 
 
@@ -256,7 +246,7 @@ async def get_user_by_google_id(google_id: str) -> Optional[Dict[str, Any]]:
     pool = await get_pool()
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
-            "SELECT id, email, full_name, email_verified, created_at FROM users WHERE google_id = $1",
+            "SELECT id, email, full_name, created_at FROM users WHERE google_id = $1",
             google_id
         )
     
@@ -265,7 +255,6 @@ async def get_user_by_google_id(google_id: str) -> Optional[Dict[str, Any]]:
             "id": row["id"],
             "email": row["email"],
             "full_name": row["full_name"],
-            "email_verified": row["email_verified"],
             "created_at": row["created_at"].isoformat() if row["created_at"] else None
         }
     return None

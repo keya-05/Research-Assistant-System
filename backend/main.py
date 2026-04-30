@@ -10,7 +10,7 @@ from src.api.routes import (
     get_conversation_endpoint,
     query_endpoint
 )
-from src.api.auth_routes import register_user, login_user, google_login
+from src.api.auth_routes import google_login
 from src.api.auth_middleware import get_current_user
 from src.models.schemas import (
     QueryRequest,
@@ -18,8 +18,6 @@ from src.models.schemas import (
     ConversationResponse,
     CreateConversationResponse,
     HealthResponse,
-    UserCreate,
-    UserLogin,
     GoogleLogin,
     TokenResponse,
     UserResponse
@@ -51,21 +49,9 @@ async def health():
     return await health_check()
 
 
-@app.post("/auth/register", response_model=TokenResponse)
-async def register(user_data: UserCreate):
-    """Register a new user with email/password."""
-    return await register_user(user_data)
-
-
-@app.post("/auth/login", response_model=TokenResponse)
-async def login(user_data: UserLogin):
-    """Login with email and password."""
-    return await login_user(user_data)
-
-
 @app.post("/auth/google", response_model=TokenResponse)
 async def google_auth(user_data: GoogleLogin):
-    """Login or register with Google OAuth."""
+    """Login or register with Google OAuth (only auth method)."""
     return await google_login(user_data)
 
 
