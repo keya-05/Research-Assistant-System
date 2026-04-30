@@ -2,7 +2,7 @@
 .git
 .gitignore
 
-# Environment secrets
+# Secrets / env files
 .env
 *.env
 backend/.env
@@ -18,6 +18,8 @@ venv/
 .venv/
 env/
 ENV/
+backend/venv/
+backend/.venv/
 *.egg-info/
 .pytest_cache/
 .mypy_cache/
@@ -29,20 +31,24 @@ frontend/node_modules/
 dist/
 frontend/dist/
 .vite/
+frontend/.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # Logs
 *.log
 logs/
 
-# OS/editor files
+# OS / editor
 .DS_Store
 .vscode/
 .idea/
 
-# Docker files not needed inside build context
-docker-compose.yml
-docker-compose.yml.backup
-
-# Local data
+# Local DB/data
 *.sqlite
 *.db
+
+# Docker/backup files not needed in image
+docker-compose.yml
+docker-compose.yml.backup
