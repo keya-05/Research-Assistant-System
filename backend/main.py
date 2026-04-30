@@ -1,10 +1,27 @@
+"""Main FastAPI application for Research Assistant."""
 import logging
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, field_validator
 import contextlib
-from database import init_db, get_cached_query, save_query_response
-from agents import process_query
+from src.db.database import init_db
+from src.api.routes import (
+    health_check,
+    create_conversation_endpoint,
+    get_conversation_endpoint,
+    query_endpoint
+)
+from src.api.auth_routes import google_login
+from src.api.auth_middleware import get_current_user
+from src.models.schemas import (
+    QueryRequest,
+    QueryResponse,
+    ConversationResponse,
+    CreateConversationResponse,
+    HealthResponse,
+    GoogleLogin,
+    TokenResponse,
+    UserResponse
+)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
@@ -23,60 +40,45 @@ app.add_middleware(
     allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
 )
 
-class QueryRequest(BaseModel):
-    question: str
 
-    @field_validator("question")
-    @classmethod
-    def validate_question(cls, v: str) -> str:
-        v = v.strip()
-        if len(v) < 5:    raise ValueError("Too short (min 5 chars)")
-        if len(v) > 2000: raise ValueError("Too long (max 2000 chars)")
-        return v
+# ==================== PUBLIC ENDPOINTS ====================
 
-class QueryResponse(BaseModel):
-    answer: str
-    sources: list[str]
-    confidence: str
-    cached: bool = False
-
-
-@app.get("/health")
+@app.get("/health", response_model=HealthResponse)
 async def health():
-    return {"status": "ok"}
+    """Health check endpoint."""
+    return await health_check()
+
+
+@app.post("/auth/google", response_model=TokenResponse)
+async def google_auth(user_data: GoogleLogin):
+    """Login or register with Google OAuth (only auth method)."""
+    return await google_login(user_data)
+
+
+# ==================== PROTECTED ENDPOINTS ====================
+
+@app.post("/conversations", response_model=CreateConversationResponse)
+async def create_conversation_route(current_user: UserResponse = Depends(get_current_user)):
+    """Create a new conversation for the authenticated user."""
+    return await create_conversation_endpoint(current_user.id)
+
+
+@app.get("/conversations/{conversation_id}", response_model=ConversationResponse)
+async def get_conversation_route(conversation_id: int, current_user: UserResponse = Depends(get_current_user)):
+    """Get full conversation with all messages."""
+    return await get_conversation_endpoint(conversation_id, current_user.id)
+
 
 @app.post("/query", response_model=QueryResponse)
-async def query(req: QueryRequest):
-    q = req.question.strip()
-    logger.info(f"Received question: {q[:80]}")
+async def query_route(req: QueryRequest, current_user: UserResponse = Depends(get_current_user)):
+    """
+    Process a research query.
+    If conversation_id is provided, adds message to that conversation.
+    If not, creates a new conversation.
+    """
+    return await query_endpoint(req, current_user.id)
 
-    # Check cache
-    cached = await get_cached_query(q)
-    if cached:
-        logger.info("Returning cached result")
-        return QueryResponse(**cached, cached=True)
-
-    # Run pipeline
-    try:
-        result = await process_query(q)
-        logger.info(f"Pipeline result: confidence={result['confidence']}, sources={len(result['sources'])}")
-    except Exception as e:
-        logger.error(f"Pipeline failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Research pipeline failed: {str(e)}")
-
-    # Save to DB only if it's a real result (not a fallback error)
-    if result["confidence"] != "low" or "error occurred" not in result["answer"].lower():
-        try:
-            await save_query_response(q, result["answer"], result["sources"], result["confidence"])
-            logger.info("Saved to database")
-        except Exception as e:
-            logger.error(f"DB save failed: {e}", exc_info=True)
-    else:
-        logger.info("Result was a fallback error; skipping database save.")
-        # Don't crash the request if DB save fails — still return result
-
-    return QueryResponse(**result)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

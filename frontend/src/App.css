@@ -15,6 +15,18 @@
 .logo-text span { color: var(--accent); }
 .tagline { font-size: 0.88rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
 
+/* Auth section */
+.auth-section { position: absolute; top: 3.5rem; right: 0; }
+.auth-btn {
+  background: var(--surface2); color: var(--text); border: 1px solid var(--border);
+  padding: 0.5rem 1rem; font-family: 'Syne', sans-serif; font-size: 0.85rem;
+  font-weight: 600; border-radius: var(--r); cursor: pointer; transition: all 0.2s;
+}
+.auth-btn:hover { background: var(--surface3); border-color: var(--accent); }
+.user-info { display: flex; align-items: center; gap: 0.75rem; }
+.user-name { font-size: 0.85rem; color: var(--muted); }
+.auth-hint { font-size: 0.85rem; color: var(--muted); margin-top: 0.5rem; }
+
 /* Pipeline badge */
 .pipeline {
   display: inline-flex; gap: 0.5rem; align-items: center; margin-top: 1.25rem;
