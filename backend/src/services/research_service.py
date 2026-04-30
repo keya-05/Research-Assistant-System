@@ -1,12 +1,9 @@
+"""Research service for processing queries using the LangGraph multi-agent system."""
 import logging
-from dotenv import load_dotenv
-
-load_dotenv()
+import asyncio
+from src.agents.graph.workflow import app as research_graph
 
 logger = logging.getLogger(__name__)
-
-# Import the compiled LangGraph workflow from the Agents folder
-from Agents.graph.workflow import app as research_graph
 
 
 async def process_query(question: str) -> dict:

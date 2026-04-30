@@ -6,6 +6,12 @@ httpx
 pydantic
 python-dotenv
 
+# Authentication
+python-jose[cryptography]
+bcrypt
+python-multipart
+google-auth
+
 # Agent Core
 langchain
 langgraph

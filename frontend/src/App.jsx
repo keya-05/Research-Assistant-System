@@ -1,4 +1,6 @@
 import { useState, useRef } from 'react'
+import { AuthProvider, useAuth } from './context/AuthContext'
+import AuthModal from './components/AuthModal'
 import './App.css'
 
 const EXAMPLES = [
@@ -53,12 +55,14 @@ function Loading() {
   )
 }
 
-export default function App() {
+function AppContent() {
   const [question, setQuestion] = useState('')
-  const [loading, setLoading]   = useState(false)
-  const [result, setResult]     = useState(null)
-  const [error, setError]       = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState(null)
+  const [error, setError] = useState(null)
+  const [showAuthModal, setShowAuthModal] = useState(false)
   const ref = useRef(null)
+  const { user, logout, apiCall } = useAuth()
 
   const submit = async (q) => {
     const query = (q ?? question).trim()
@@ -66,11 +70,11 @@ export default function App() {
     setLoading(true); setResult(null); setError(null)
 
     try {
-      const res = await fetch('/query', {
+      const res = await apiCall('/query', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: query }),
       })
+      
       if (!res.ok) {
         const e = await res.json().catch(() => ({}))
         throw new Error(e.detail || `Error ${res.status}`)
@@ -98,6 +102,16 @@ export default function App() {
           <span className="sep">→</span> Confidence
           <span className="dot" />
         </div>
+        <div className="auth-section">
+          {user ? (
+            <div className="user-info">
+              <span className="user-name">{user.full_name || user.email}</span>
+              <button className="auth-btn" onClick={logout}>Logout</button>
+            </div>
+          ) : (
+            <button className="auth-btn" onClick={() => setShowAuthModal(true)}>Login</button>
+          )}
+        </div>
       </header>
 
       <main style={{display:'flex',flexDirection:'column',gap:'2rem'}}>
@@ -107,20 +121,25 @@ export default function App() {
             <textarea
               id="q" ref={ref} rows={4} className="query-input"
               placeholder="e.g. What is the impact of AI on healthcare?"
-              value={question} disabled={loading}
+              value={question} disabled={loading || !user}
               onChange={e => setQuestion(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submit() }}
             />
           </div>
           <div className="actions-row">
-            <button className="btn-submit" onClick={() => submit()} disabled={loading || !question.trim()}>
+            <button 
+              className="btn-submit" 
+              onClick={() => submit()} 
+              disabled={loading || !question.trim() || !user}
+            >
               {loading ? 'Researching…' : 'Run Research'}
             </button>
             <span className="hint">Ctrl + Enter</span>
           </div>
+          {!user && <p className="auth-hint">Please login to use the research assistant</p>}
         </section>
 
-        {!result && !loading && (
+        {!result && !loading && user && (
           <section className="examples-section">
             <p className="examples-label">Try an example</p>
             <div className="examples-grid">
@@ -148,6 +167,16 @@ export default function App() {
       </main>
 
       <footer className="footer">research-assistant · fastapi + react + postgresql</footer>
+      
+      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
     </div>
+  )
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   )
 }
