@@ -1,0 +1,48 @@
+# Git
+.git
+.gitignore
+
+# Environment secrets
+.env
+*.env
+backend/.env
+frontend/.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+env/
+ENV/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node / frontend
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+.vite/
+
+# Logs
+*.log
+logs/
+
+# OS/editor files
+.DS_Store
+.vscode/
+.idea/
+
+# Docker files not needed inside build context
+docker-compose.yml
+docker-compose.yml.backup
+
+# Local data
+*.sqlite
+*.db
