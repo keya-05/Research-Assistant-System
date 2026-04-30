@@ -11,6 +11,8 @@ services:
   frontend:
     build: ./frontend
     container_name: research_frontend
+    env_file:
+      - ./frontend/.env
     ports:
       - "5173:5173"
     depends_on:
