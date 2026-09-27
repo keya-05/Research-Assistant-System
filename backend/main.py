@@ -55,6 +55,12 @@ async def google_auth(user_data: GoogleLogin):
     return await google_login(user_data)
 
 
+@app.get("/auth/me", response_model=UserResponse)
+async def get_me(current_user: UserResponse = Depends(get_current_user)):
+    """Get the currently authenticated user."""
+    return current_user
+
+
 # ==================== PROTECTED ENDPOINTS ====================
 
 @app.post("/conversations", response_model=CreateConversationResponse)
