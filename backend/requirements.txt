@@ -25,3 +25,5 @@ tavily-python
 
 # Development & CLI
 langgraph-cli[inmem]
+pytest
+requests
