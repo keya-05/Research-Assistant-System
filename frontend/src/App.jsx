@@ -62,7 +62,7 @@ function AppContent() {
   const [error, setError] = useState(null)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const ref = useRef(null)
-  const { user, logout, apiCall } = useAuth()
+  const { user, loading: authLoading, logout, apiCall } = useAuth()
 
   const submit = async (q) => {
     const query = (q ?? question).trim()
@@ -103,7 +103,11 @@ function AppContent() {
           <span className="dot" />
         </div>
         <div className="auth-section">
-          {user ? (
+          {authLoading ? (
+            <div className="user-info">
+              <span className="user-name">Loading...</span>
+            </div>
+          ) : user ? (
             <div className="user-info">
               <span className="user-name">{user.full_name || user.email}</span>
               <button className="auth-btn" onClick={logout}>Logout</button>
@@ -121,7 +125,7 @@ function AppContent() {
             <textarea
               id="q" ref={ref} rows={4} className="query-input"
               placeholder="e.g. What is the impact of AI on healthcare?"
-              value={question} disabled={loading || !user}
+              value={question} disabled={loading || !user || authLoading}
               onChange={e => setQuestion(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submit() }}
             />
@@ -130,13 +134,13 @@ function AppContent() {
             <button 
               className="btn-submit" 
               onClick={() => submit()} 
-              disabled={loading || !question.trim() || !user}
+              disabled={loading || !question.trim() || !user || authLoading}
             >
               {loading ? 'Researching…' : 'Run Research'}
             </button>
             <span className="hint">Ctrl + Enter</span>
           </div>
-          {!user && <p className="auth-hint">Please login to use the research assistant</p>}
+          {!user && !authLoading && <p className="auth-hint">Please login to use the research assistant</p>}
         </section>
 
         {!result && !loading && user && (
