@@ -10,13 +10,36 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check if user is logged in on mount
-    const storedToken = localStorage.getItem('token')
-    if (storedToken) {
+    async function initAuth() {
+      const storedToken = localStorage.getItem('token')
+      if (!storedToken) {
+        setLoading(false)
+        return
+      }
+      
       setToken(storedToken)
-      // Optionally validate token by calling a /me endpoint
+      
+      try {
+        const res = await fetch(`${API_BASE}/auth/me`, {
+          headers: { 'Authorization': `Bearer ${storedToken}` }
+        })
+        
+        if (res.ok) {
+          const userData = await res.json()
+          setUser(userData)
+        } else {
+          localStorage.removeItem('token')
+          setToken(null)
+          setUser(null)
+        }
+      } catch (err) {
+        console.error('Failed to restore session:', err)
+      } finally {
+        setLoading(false)
+      }
     }
-    setLoading(false)
+    
+    initAuth()
   }, [])
 
   const googleLogin = async (googleToken) => {

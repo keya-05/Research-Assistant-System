@@ -337,8 +337,16 @@ created_at TIMESTAMPTZ DEFAULT NOW()
 ### Security Flow
 1. User registers (email/password or Google OAuth) → auto-logged in
 2. User receives JWT token immediately
-3. Token sent in `Authorization: Bearer <token>` header
-4. Server validates token on protected routes
+3. Token stored in `localStorage` on frontend
+4. Token sent in `Authorization: Bearer <token>` header for API calls
+5. Server validates token on protected routes
+
+### Persistent Session Lifecycle
+When the application is started or the browser is refreshed:
+1. Application checks `localStorage` for JWT
+2. Frontend calls `GET /auth/me` with the token
+3. If valid, the user is restored into memory
+4. If invalid (401), the token is cleared and session is reset
 
 ### Authentication Methods
 
@@ -448,6 +456,21 @@ Response:
   }
 }
 ```
+
+### GET /auth/me (Protected)
+Returns the currently authenticated user based on the JWT token.
+Headers: `Authorization: Bearer <token>`
+
+Response (200 OK):
+```json
+{
+  "id": 1,
+  "email": "user@example.com",
+  "full_name": "John Doe",
+  "created_at": "2024-01-01T00:00:00"
+}
+```
+*Note: Returns `401 Unauthorized` if token is missing, invalid, or expired.*
 
 ### POST /query (Protected)
 Headers: `Authorization: Bearer <token>`
